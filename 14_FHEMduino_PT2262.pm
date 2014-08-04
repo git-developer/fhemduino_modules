@@ -354,15 +354,23 @@ sub getButton($$){ #############################################################
     "FFFFF" => "31"
     );
 
-  # For Housecode 11111 0F = off F0 = on  ff= unknown
-  my %action = (
-    "FF" => "on",
-    "0F"	=> "on",
-    "F0"	=> "off"
-    );
-
-  if (exists $housecode{$receivedHouseCode}) {
+ if (exists $housecode{$receivedHouseCode}) {
     $parsedHouseCode = $housecode{$receivedHouseCode};
+  }
+
+  my %action = ();
+  if ($parsedHouseCode eq "32")
+  {
+	%action = (
+		"F0"	=> "on",
+		"0F"	=> "off"
+		);
+  } else {
+	%action = (
+		"FF" => "on",
+		"0F"	=> "on",
+		"F0"	=> "off"
+	);
   }
 
   if (exists $button{$receivedButtonCode}) {
