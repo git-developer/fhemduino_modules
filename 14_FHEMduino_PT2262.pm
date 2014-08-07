@@ -128,7 +128,8 @@ sub FHEMduino_PT2262_Define($$){ ###############################################
   elsif(int(@a) == 6) {
     $ontristate = $a[3];
     $offtristate = $a[4];
-    $periodusec = $a[5];
+    my $periodusec = $a[5];
+	$hash->{periodusec} = $periodusec;
   }
   else {
     return "wrong syntax: define <name> FHEMduino_PT2262 <code>";
@@ -140,7 +141,7 @@ sub FHEMduino_PT2262_Define($$){ ###############################################
   $hash->{CODE} = $tristatecode;
   $hash->{DEF} = $tristatecode . " " . $ontristate . " " . $offtristate;
   $hash->{XMIT} = lc($tristatecode);
-  $hash->{periodusec} = $periodusec;
+  
   
   Log3 $hash, 5, "Define hascode: {$tristatecode}{$name}";
   $modules{FHEMduino_PT2262}{defptr}{$tristatecode} = $hash;
@@ -225,8 +226,10 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
  # }
 
   my $v = join(" ", @a);
-  if ($hash->{periodusec} <=0)
-  $hash->{periodusec} = 350; # Add fallack value, if not defined
+  if (!defined($hash->{periodusec}))
+  {
+    $hash->{periodusec} = 350; # Add fallack value, if not defined 
+  }
   $message = "is".uc($hash->{XMIT}.$hash->{$c}.$hash->{periodusec});
 
   ## Log that we are going to switch InterTechno
