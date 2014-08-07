@@ -125,6 +125,11 @@ sub FHEMduino_PT2262_Define($$){ ###############################################
     $ontristate = $a[3];
     $offtristate = $a[4];
   }
+  elsif(int(@a) == 6) {
+    $ontristate = $a[3];
+    $offtristate = $a[4];
+    $periodusec = $a[5];
+  }
   else {
     return "wrong syntax: define <name> FHEMduino_PT2262 <code>";
   }
@@ -135,6 +140,7 @@ sub FHEMduino_PT2262_Define($$){ ###############################################
   $hash->{CODE} = $tristatecode;
   $hash->{DEF} = $tristatecode . " " . $ontristate . " " . $offtristate;
   $hash->{XMIT} = lc($tristatecode);
+  $hash->{periodusec} = $periodusec;
   
   Log3 $hash, 5, "Define hascode: {$tristatecode}{$name}";
   $modules{FHEMduino_PT2262}{defptr}{$tristatecode} = $hash;
@@ -219,7 +225,9 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
  # }
 
   my $v = join(" ", @a);
-  $message = "is".uc($hash->{XMIT}.$hash->{$c});
+  if ($hash->{periodusec} <=0)
+  $hash->{periodusec} = 350; # Add fallack value, if not defined
+  $message = "is".uc($hash->{XMIT}.$hash->{$c}.$hash->{periodusec});
 
   ## Log that we are going to switch InterTechno
   Log GetLogLevel($a[0],2), "FHEMduino_PT2262 set $v";
@@ -400,7 +408,9 @@ sub FHEMduino_PT2262_Parse($$){ ################################################
   my $displayName = "";
   my $action = "";
   my $result = "";
-
+  
+  my ($msg,$periodusec)=split(/:/,$msg,2);  ## Split msg from the duration of one period
+  
   $result = getButton($hash,$msg);
 
   if ($result ne "") {
