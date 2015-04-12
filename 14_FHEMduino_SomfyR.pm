@@ -94,7 +94,8 @@ sub FHEMduino_SomfyR_Parse($$){
 		return "";
 	}
 	# get address
-	my $address = uc(substr($msg, 14, 6));
+#	my $address = uc(substr($msg, 14, 6));
+	my $address = uc(substr($msg, 18, 2) . substr($msg, 16, 2) . substr($msg, 14, 2));
 
 	# get command and adapt
 	my $cmd = sprintf("%X", hex(substr($msg, 6, 2)) & 0xF0);
@@ -113,10 +114,14 @@ sub FHEMduino_SomfyR_Parse($$){
   if(!$srh) {
     foreach my $d (keys %defs) {
       if($defs{$d}{TYPE} eq "FHEMduino_SomfyR") {
-        if(uc($defs{$d}{rawDevice}) =~ m/^$address/) {
-					Log3 $hash, 1, "FHEMduino_SomfyR found right address " . $defs{$d}{NAME};
-					$srh = $defs{$d};
-        }
+				my $rd = AttrVal( $defs{$d}{NAME}, 'rawDevice', undef );
+					if ( defined( $rd )) {
+					Log3 $hash, 5, "FHEMduino_SomfyR check for rawdevice in " . $defs{$d}{NAME} . " - " . $rd;
+					if( $address eq uc($rd) ) {
+						Log3 $hash,  4, "FHEMduino_SomfyR found right address " . $defs{$d}{NAME};
+						$srh = $defs{$d};
+					}
+				}
 			}
     }
 		if($srh) {
@@ -145,7 +150,7 @@ sub FHEMduino_SomfyR_Parse($$){
 
 	# detect duplicate message
 	if ( $msg eq $hash->{lastMsg}) {
-#    Log3 $hash, 1, "FHEMduino_SomfyR reject duplicate message :$msg:";
+    Log3 $hash, 4, "FHEMduino_SomfyR reject duplicate message :$msg:";
 		return $hash->{NAME};
 	}
 	$hash->{lastMsg} = $msg;
@@ -180,35 +185,13 @@ sub FHEMduino_SomfyR_Parse($$){
 				no strict "refs"; 
 				my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "virtual", $txtcmd);
 				use strict "refs";
-
-
 			}
 
-
-		# my $rawhash = $modules{SOMFY}{defptr}{$rawdev};
-		# if ( defined($rawhash)) {
-			# Log3 $hash, 1, "FHEMduino_SomfyR found SOMFY device " . $rawhash->{NAME};
-			# # convert message to change address (leave rest unchanged)  ????
-			
-			# my $rawadr = $rawhash->{ADDRESS};
-			# # build Ys meesage for disptching in Somfy Parse   ????
-			# my $rawmsg = "YsA0" . sprintf( "%X", $cmd ) . "00000" . substr($rawadr, 4, 2) . substr($rawadr, 2, 2) . substr($rawadr, 0, 2);
-
-      # Log3 $name, 1, "$name: call parseFn in " . $rawhash->{TYPE} . "   - " . $rawmsg;
-
-			# # third try add virtual as modifier to set command and directly call send
-		  # my $module = $modules{$rawhash->{TYPE}};
-			# no strict "refs"; 
-			# my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "virtual", $txtcmd);
-			# use strict "refs";
-			
-
-
 		} else {
-			Log3 $hash, 1, "FHEMduino_SomfyR SOMFY rawDevice not found $rawdev";
+			Log3 $hash, 1, "FHEMduino_SomfyR SOMFY rawDevice $rawdev not found from $name";
 		}
 	} else {
-		Log3 $hash, 1, "FHEMduino_SomfyR No rawDevice set";
+		Log3 $hash, 1, "FHEMduino_SomfyR No rawDevice set in $name";
 	}
 		
   readingsBeginUpdate($hash);
