@@ -3,12 +3,6 @@
 # Special case SOMFYR will only support mapping of somfy remotes to the real devices in FHEM 
 # receives the signal from a SOMFY remote and maps this to the device in FHEM 
 
-
-# TODO? : propagate to SOMFY
-# TODO? : check if IODev is needed as attr{$name}
-# TODO? : check org-addr
-
-
 use strict;
 use warnings;
 
@@ -284,6 +278,10 @@ sub FHEMduino_SomfyR_Attr($$){
         </li><br>
 
 
+    <li><a href="#IODev">IODev (!)</a></li>
+    <li><a href="#do_not_notify">do_not_notify</a></li>
+    <li><a href="#eventMap">eventMap</a></li>
+    <li><a href="#showtime">showtime</a></li>
   </ul>
 </ul>
 
