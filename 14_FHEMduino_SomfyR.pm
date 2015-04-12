@@ -105,55 +105,105 @@ sub FHEMduino_SomfyR_Parse($$){
   # Only command and address are needed	
 
 	# Identify the SomfyRemote module
-  my $def = $modules{FHEMduino_SomfyR}{defptr}{$hash->{NAME} . "." . $address};
-  $def = $modules{FHEMduino_SomfyR}{defptr}{$address} if(!$def);
-  if(!$def) {
+	my $srh;
+  $srh = $modules{FHEMduino_SomfyR}{defptr}{$hash->{NAME} . "." . $address};
+  $srh = $modules{FHEMduino_SomfyR}{defptr}{$address} if(!$srh);
+
+	# Identify the SomfyRemote module by assigned raw device and then assign as ignored
+  if(!$srh) {
+    foreach my $d (keys %defs) {
+      if($defs{$d}{TYPE} eq "FHEMduino_SomfyR") {
+        if(uc($defs{$d}{rawDevice}) =~ m/^$address/) {
+					Log3 $hash, 1, "FHEMduino_SomfyR found right address " . $defs{$d}{NAME};
+					$srh = $defs{$d};
+        }
+			}
+    }
+		if($srh) {
+			# Special case found the address only in RAWDEVICE
+			# no further processing, since this command is coming from 
+			return $srh->{NAME};
+		}
+	}
+	
+  if(!$srh) {
     Log3 $hash, 1, "FHEMduino_SomfyR undefined sensor detected, address $address";
     return "UNDEFINED FHEMduino_SomfyR_$address FHEMduino_SomfyR $address";
   }
   
-  $hash = $def;
+  $hash = $srh;
 
+	# set text command
+	my $txtcmd = "stop";
+	if ( $cmd == 20 ) {
+		$txtcmd =  "off";
+	} elsif ( $cmd == 40 ) {
+		$txtcmd =  "on";
+	} elsif ( $cmd == 80 ) {
+		$txtcmd =  "prog";
+	}
+
+	# detect duplicate message
+	if ( $msg eq $hash->{lastMsg}) {
+#    Log3 $hash, 1, "FHEMduino_SomfyR reject duplicate message :$msg:";
+		return $hash->{NAME};
+	}
+	$hash->{lastMsg} = $msg;
+	
   # Identify the SOMFY device by using rawdevice	
 	my $name = $hash->{NAME};
 	my $rawdev = AttrVal($name,'rawDevice',undef);
 
 	# check if rdev is defined and exists
   if( defined($rawdev) ) {
-		my $rawhash = $defs{$rawdev};
-		if ( defined($rawhash)) {
-			# convert message to change address (leave rest unchanged)  ????
+#		my $rawhash = $defs{$rawdev};
+		# normalize address in rawdev
+		$rawdev = uc( $rawdev );
+
+		my $slist =  $modules{SOMFY}{defptr}{$rawdev};
+		if ( defined($slist)) {
+			foreach my $n ( keys %{ $slist } ) {
+
+				my $rawhash = $modules{SOMFY}{defptr}{$rawdev}{$n};
+
+				Log3 $hash, 1, "FHEMduino_SomfyR found SOMFY device " . $rawhash->{NAME};
+				# convert message to change address (leave rest unchanged)  ????
+				
+				my $rawadr = $rawhash->{ADDRESS};
+				# build Ys meesage for disptching in Somfy Parse   ????
+				my $rawmsg = "YsA0" . sprintf( "%X", $cmd ) . "00000" . substr($rawadr, 4, 2) . substr($rawadr, 2, 2) . substr($rawadr, 0, 2);
+
+				Log3 $name, 1, "$name: call setFn virtual in " . $rawhash->{TYPE} . "   - " . $rawmsg;
+
+				# third try add virtual as modifier to set command and directly call send
+				my $module = $modules{$rawhash->{TYPE}};
+				no strict "refs"; 
+				my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "virtual", $txtcmd);
+				use strict "refs";
+
+
+			}
+
+
+		# my $rawhash = $modules{SOMFY}{defptr}{$rawdev};
+		# if ( defined($rawhash)) {
+			# Log3 $hash, 1, "FHEMduino_SomfyR found SOMFY device " . $rawhash->{NAME};
+			# # convert message to change address (leave rest unchanged)  ????
 			
-			my $rawadr = $rawhash->{ADDRESS};
-			# build Ys meesage for disptching in Somfy Parse   ????
-			my $rawmsg = "YsA0" . sprintf( "%X", $cmd ) . "00000" . substr($rawadr, 4, 2) . substr($rawadr, 2, 2) . substr($rawadr, 0, 2);
+			# my $rawadr = $rawhash->{ADDRESS};
+			# # build Ys meesage for disptching in Somfy Parse   ????
+			# my $rawmsg = "YsA0" . sprintf( "%X", $cmd ) . "00000" . substr($rawadr, 4, 2) . substr($rawadr, 2, 2) . substr($rawadr, 0, 2);
 
-      Log3 $name, 1, "$name: call parseFn in " . $rawhash->{TYPE} . "   - " . $rawmsg;
+      # Log3 $name, 1, "$name: call parseFn in " . $rawhash->{TYPE} . "   - " . $rawmsg;
 
-			# third try add nosend as modifier to set command and directly call send
-			my $txtcmd = "stop";
-			if ( $cmd == 20 ) {
-				$txtcmd =  "off";
-			} elsif ( $cmd == 40 ) {
-				$txtcmd =  "on";
-			} elsif ( $cmd == 80 ) {
-				$txtcmd =  "prog";
-  		}
-
-		  my $module = $modules{$rawhash->{TYPE}};
-			no strict "refs"; 
-			my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "nosend", $txtcmd);
-			use strict "refs";
+			# # third try add virtual as modifier to set command and directly call send
+		  # my $module = $modules{$rawhash->{TYPE}};
+			# no strict "refs"; 
+			# my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "virtual", $txtcmd);
+			# use strict "refs";
 			
 
 
-			# second try call parseFN of module directly
-#		  my $module = $modules{$rawhash->{TYPE}};
-#			no strict "refs"; 
-#			my @result = &{$module->{ParseFn}}($rawhash,$rawmsg);
-#			use strict "refs";
-			# dispatch again (recursive ???)
-#      Dispatch($defs{$rawdev}, $rawmsg, undef);
 		} else {
 			Log3 $hash, 1, "FHEMduino_SomfyR SOMFY rawDevice not found $rawdev";
 		}
@@ -208,6 +258,50 @@ sub FHEMduino_SomfyR_Attr($$){
 
   <br>
 
+  <a name="FHEMduino_SomfyRdefine"></a>
+  <b>Define</b>
+  <ul>
+    <code>define &lt;name&gt; FHEMduino_SomfyR &lt;code&gt; &lt;address&gt;</code> <br>
+
+    <br>
+    &lt;address&gt; is the address of the corresponding somfy device that is sent with every message
+  </ul>
+  <br>
+
+  <a name="FHEMduino_SomfyRset"></a>
+  <b>Set</b> <ul>N/A</ul><br>
+
+  <a name="FHEMduino_SomfyRget"></a>
+  <b>Get</b> <ul>N/A</ul><br>
+
+  <a name="FHEMduino_SomfyRattr"></a>
+  <b>Attributes</b>
+  <ul>
+    <a name="rawDevice"></a>
+    <li>rawDevice<br>
+        Specifies the name of the <a href="#SOMFY">SOMFY</a> RTS device. <br>
+			  The corresponding command is then forwarded as virtual command to the SOMFY device to update state there. 
+				The specific modifier virtual is added to the set command on the SOMFY device to avoid any IO being sent.
+				So instead of set <br>
+					<code>&lt;somfy-device&gt; &lt;command e.g. close|on&gt;</code> <br>
+				the follofing command is send (via function invocation in SOMFY)	<br>
+					<code>&bsp;&bsp;&lt;somfy-device&gt; virtual &lt;command e.g. close|on&gt;</code> <br>
+		</li><br>
+
+    <a name="ignore"></a>
+    <li>ignore<br>
+        Ignore this device, e.g. if it belongs to your neighbour. The device
+        won't trigger any FileLogs/notifys, issued commands will silently
+        ignored (no RF signal will be sent out, just like for the <a
+        href="#attrdummy">dummy</a> attribute). The device won't appear in the
+        list command (only if it is explicitely asked for it), nor will it
+        appear in commands which use some wildcard/attribute as name specifiers
+        (see <a href="#devspec">devspec</a>). You still get them with the
+        "ignored=1" special devspec.
+        </li><br>
+
+
+  </ul>
 </ul>
 
 =end html

@@ -13,7 +13,7 @@ FHEMduino_Env_Initialize($)
   my ($hash) = @_;
 
   # output format is "WMMRRRRRRRRR"
-  #                   W0358DA11C39
+  #                   W0358DA11C39 
   #     W = W(eather sensor)
   #     M = M(anufactor code)
   #         01 = KW9010

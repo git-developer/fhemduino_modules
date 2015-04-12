@@ -661,7 +661,7 @@ FHEMduino_Parse($$$$)
     Log3 $name, 4, "OSVduino: $dmsg";
   }
   elsif($fn eq "Y" && $len == 20) {        # SomfyR
-    Log3 $name, 2, "$name: found message $dmsg message length ($len)";
+#    Log3 $name, 2, "$name: found message $dmsg message length ($len)";
     Log3 $name, 4, "SomfyR: $dmsg";
   }
   else {
@@ -798,7 +798,7 @@ FHEMduino_Attr(@)
   <ul>
     <code>define &lt;name&gt; FHEMduino &lt;device&gt; &lt;FHTID&gt;</code> <br>
     <br>
-    USB-connected devices (FHEMduino/CUR/CUN):<br><ul>
+    USB-connected devices (FHEMduino/CUR/CUN):<br>
       &lt;device&gt; specifies the serial port to communicate with the FHEMduino.
 	  The name of the serial-device depends on your distribution, under
       linux the cdc_acm kernel module is responsible, and usually a
