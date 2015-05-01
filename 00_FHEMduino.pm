@@ -43,7 +43,7 @@ my %sets = (
   "reset"     => ""
 );
 
-my $clientsFHEMduino = ":IT:CUL_TX:OREGON:FHEMduino_Env:FHEMduino_EZ6:FHEMduino_Oregon:FHEMduino_PT2262:FHEMduino_FA20RF:FHEMduino_TCM:FHEMduino_HX:FHEMduino_DCF77:FHEMduino_Gas:";
+my $clientsFHEMduino = ":IT:CUL_TX:OREGON:FHEMduino_Env:FHEMduino_EZ6:FHEMduino_Oregon:FHEMduino_PT2262:FHEMduino_FA20RF:FHEMduino_TCM:FHEMduino_HX:FHEMduino_DCF77:FHEMduino_Gas:FHEMduino_SomfyR:";
 
 my %matchListFHEMduino = (
     "1:IT"                 => "^i......\$",
@@ -58,6 +58,7 @@ my %matchListFHEMduino = (
     "10:FHEMduino_DCF77"   => "D...............\$",
     "11:OREGON"            => "^(3[8-9A-F]|[4-6][0-9A-F]|7[0-8]).*",
     "12:FHEMduino_Gas"     => "G...........\$",      # Special Sketch needed. See GitHub GAS_I2C or FHEMWIKI
+    "13:FHEMduino_SomfyR"     =>  "Ys .. .. .... ......\$", # handle somfy remotes
 );
 
 sub
@@ -659,6 +660,10 @@ FHEMduino_Parse($$$$)
   elsif($fn eq "O" && $len >= 2) {        # Oregon
     Log3 $name, 4, "OSVduino: $dmsg";
   }
+  elsif($fn eq "Y" && $len == 20) {        # SomfyR
+#    Log3 $name, 2, "$name: found message $dmsg message length ($len)";
+    Log3 $name, 4, "SomfyR: $dmsg";
+  }
   else {
     DoTrigger($name, "UNKNOWNCODE $dmsg message length ($len)");
     Log3 $name, 2, "$name: unknown message $dmsg message length ($len)";
@@ -793,7 +798,7 @@ FHEMduino_Attr(@)
   <ul>
     <code>define &lt;name&gt; FHEMduino &lt;device&gt; &lt;FHTID&gt;</code> <br>
     <br>
-    USB-connected devices (FHEMduino/CUR/CUN):<br><ul>
+    USB-connected devices (FHEMduino/CUR/CUN):<br>
       &lt;device&gt; specifies the serial port to communicate with the FHEMduino.
 	  The name of the serial-device depends on your distribution, under
       linux the cdc_acm kernel module is responsible, and usually a

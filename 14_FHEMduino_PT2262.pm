@@ -518,3 +518,25 @@ sub bin2tristate{ ##############################################################
 }
 
 1;
+
+=pod
+
+=begin html
+
+<a name="FHEMduino_PT2262"></a>
+<h3>tbd</h3>
+<ul>
+</ul>
+
+=end html
+
+=begin html_DE
+
+<a name="FHEMduino_PT2262"></a>
+<h3>tbd</h3>
+<ul>
+</ul>
+
+=end html_DE
+
+=cut
