@@ -151,39 +151,44 @@ sub FHEMduino_SomfyR_Parse($$){
 	
   # Identify the SOMFY device by using rawdevice	
 	my $name = $hash->{NAME};
-	my $rawdev = AttrVal($name,'rawDevice',undef);
+	my $rawdAttr = AttrVal($name,'rawDevice',undef);
 
 	# check if rdev is defined and exists
-  if( defined($rawdev) ) {
-#		my $rawhash = $defs{$rawdev};
+  if( defined($rawdAttr) ) {
+
 		# normalize address in rawdev
-		$rawdev = uc( $rawdev );
+		$rawdAttr = uc( $rawdAttr );
 
-		my $slist =  $modules{SOMFY}{defptr}{$rawdev};
-		if ( defined($slist)) {
-			foreach my $n ( keys %{ $slist } ) {
+    my @rawdevs = split( /\s+/, $rawdAttr );
+    
+    foreach my $rawdev ( @rawdevs ) {
 
-				my $rawhash = $modules{SOMFY}{defptr}{$rawdev}{$n};
+      my $slist =  $modules{SOMFY}{defptr}{$rawdev};
+      if ( defined($slist)) {
+        foreach my $n ( keys %{ $slist } ) {
 
-				Log3 $hash, 3, "FHEMduino_SomfyR - " .  $name . " found SOMFY device " . $rawhash->{NAME} . " sent command :$txtcmd:";
-				# convert message to change address (leave rest unchanged)  ????
-				
-				my $rawadr = $rawhash->{ADDRESS};
-				# build Ys meesage for disptching in Somfy Parse   ????
-				my $rawmsg = "YsA0" . sprintf( "%X", $cmd ) . "00000" . substr($rawadr, 4, 2) . substr($rawadr, 2, 2) . substr($rawadr, 0, 2);
+          my $rawhash = $modules{SOMFY}{defptr}{$rawdev}{$n};
 
-				Log3 $name, 4, "$name: call setFn virtual in " . $rawhash->{TYPE} . "   - " . $rawmsg;
+          Log3 $hash, 3, "FHEMduino_SomfyR - " .  $name . " found SOMFY device " . $rawhash->{NAME} . " sent command :$txtcmd:";
+          # convert message to change address (leave rest unchanged)  ????
+          
+          my $rawadr = $rawhash->{ADDRESS};
+          # build Ys meesage for disptching in Somfy Parse   ????
+          my $rawmsg = "YsA0" . sprintf( "%X", $cmd ) . "00000" . substr($rawadr, 4, 2) . substr($rawadr, 2, 2) . substr($rawadr, 0, 2);
 
-				# third try add virtual as modifier to set command and directly call send
-				my $module = $modules{$rawhash->{TYPE}};
-				no strict "refs"; 
-				my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "virtual", $txtcmd);
-				use strict "refs";
-			}
+          Log3 $name, 4, "$name: call setFn virtual in " . $rawhash->{TYPE} . "   - " . $rawmsg;
 
-		} else {
-			Log3 $hash, 1, "FHEMduino_SomfyR SOMFY rawDevice $rawdev not found from $name";
-		}
+          # third try add virtual as modifier to set command and directly call send
+          my $module = $modules{$rawhash->{TYPE}};
+          no strict "refs"; 
+          my @result = &{$module->{SetFn}}($rawhash,$rawhash->{NAME}, "virtual", $txtcmd);
+          use strict "refs";
+        }
+
+      } else {
+        Log3 $hash, 1, "FHEMduino_SomfyR SOMFY rawDevice $rawdev not found from $name";
+      }
+    }  
 	} else {
 		Log3 $hash, 1, "FHEMduino_SomfyR No rawDevice set in $name";
 	}
@@ -256,7 +261,7 @@ sub FHEMduino_SomfyR_Attr($$){
   <ul>
     <a name="rawDevice"></a>
     <li>rawDevice<br>
-        Specifies the name of the <a href="#SOMFY">SOMFY</a> RTS device. <br>
+        Specifies the address (or multiple addresses by space separated) of the <a href="#SOMFY">SOMFY</a> RTS device. <br>
 			  The corresponding command is then forwarded as virtual command to the SOMFY device to update state there. 
 				The specific modifier virtual is added to the set command on the SOMFY device to avoid any IO being sent.
 				So instead of set <br>
