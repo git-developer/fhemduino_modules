@@ -238,12 +238,15 @@ sub FHEMduino_SomfyR_Attr($$){
   The FHEMduino_SomfyR module interprets SomfyRTS messages received by the FHEMduino and propagates them to the corresponding SOMFY device to update state.
   <br><br>
 
+  To allow steering of Somfy devices with Somfy Manual Remotes and FHEM in parallel, two devices are needed one FHEMduino_SomfyR device representing the manual remote control and in addition the corresponding <a href="#SOMFY">SOMFY</a> RTS device both representing (and controlling) the same physical SOMFY receiver. Both devices in FHEM have different addresses. The connection is achieved by adding the address of the <a href="#SOMFY">SOMFY</a> RTS device as value for the rawDevice attribute in the FHEMduino_SomfyR device.
+
+  <br>
   <br>
 
   <a name="FHEMduino_SomfyRdefine"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; FHEMduino_SomfyR &lt;code&gt; &lt;address&gt;</code> <br>
+    <code>define &lt;name&gt; FHEMduino_SomfyR &lt;address&gt;</code> <br>
 
     <br>
     &lt;address&gt; is the address of the corresponding somfy device that is sent with every message
@@ -264,10 +267,10 @@ sub FHEMduino_SomfyR_Attr($$){
         Specifies the address (or multiple addresses by space separated) of the <a href="#SOMFY">SOMFY</a> RTS device. <br>
 			  The corresponding command is then forwarded as virtual command to the SOMFY device to update state there. 
 				The specific modifier virtual is added to the set command on the SOMFY device to avoid any IO being sent.
-				So instead of set <br>
-					<code>&lt;somfy-device&gt; &lt;command e.g. close|on&gt;</code> <br>
-				the follofing command is send (via function invocation in SOMFY)	<br>
-					<code>&bsp;&bsp;&lt;somfy-device&gt; virtual &lt;command e.g. close|on&gt;</code> <br>
+				So instead of <br><br>
+					<code>set &lt;somfy-device&gt; &lt;command e.g. close|on&gt;</code> <br><br>
+				the following command is send (via function invocation in SOMFY)	<br><br>
+					<code>set &lt;somfy-device&gt; virtual &lt;command e.g. close|on&gt;</code> <br>
 		</li><br>
 
     <a name="ignore"></a>
@@ -283,7 +286,7 @@ sub FHEMduino_SomfyR_Attr($$){
         </li><br>
 
 
-    <li><a href="#IODev">IODev (!)</a></li>
+    <li><a href="#IODev">IODev</a></li>
     <li><a href="#do_not_notify">do_not_notify</a></li>
     <li><a href="#eventMap">eventMap</a></li>
     <li><a href="#showtime">showtime</a></li>
