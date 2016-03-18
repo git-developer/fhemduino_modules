@@ -53,7 +53,7 @@ FHEMduino_SomfyR_Define($$)
   $modules{FHEMduino_SomfyR}{defptr}{$address} = $hash;
   AssignIoPort($hash);
   if(defined($hash->{IODev}->{NAME})) {
-    Log3 $name, 3, "$name: I/O device is " . $hash->{IODev}->{NAME};
+    Log3 $name, 4, "$name: I/O device is " . $hash->{IODev}->{NAME};
   } else {
     Log3 $name, 1, "$name: no I/O device";
   }
@@ -84,7 +84,7 @@ sub FHEMduino_SomfyR_Parse($$){
 
 	if (substr($msg, 0, 3) ne "Ys " ) {
 		# NOt matching command Ys
-		Log3 $hash, 5, "FHEMduino_SomfyR can't decode $msg";
+		Log3 $hash, 1, "FHEMduino_SomfyR can't decode $msg";
 		return "";
 	}
 	# get address
@@ -169,7 +169,7 @@ sub FHEMduino_SomfyR_Parse($$){
 
           my $rawhash = $modules{SOMFY}{defptr}{$rawdev}{$n};
 
-          Log3 $hash, 3, "FHEMduino_SomfyR - " .  $name . " found SOMFY device " . $rawhash->{NAME} . " sent command :$txtcmd:";
+          Log3 $hash, 4, "FHEMduino_SomfyR - " .  $name . " found SOMFY device " . $rawhash->{NAME} . " sent command :$txtcmd:";
           # convert message to change address (leave rest unchanged)  ????
           
           my $rawadr = $rawhash->{ADDRESS};
