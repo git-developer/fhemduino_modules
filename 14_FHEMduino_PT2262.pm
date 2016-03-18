@@ -3,6 +3,7 @@
 # $Id: 14_FHEMduino_PT2262.pm 0002 2014-05-28 snoop & mdorenka $
 # 2014-06-15: SetExtension und on-till und on-for-timer implementiert
 # 2015-04-10: added off-till, hjgode
+# 2015-04-29: added off-for-timer, hjgode
 
 package main;
 
@@ -133,6 +134,33 @@ FHEMduino_PT2262_On_For_Timer($@)
 
 }
 
+sub
+FHEMduino_PT2262_Off_For_Timer($@)
+{
+  my ($hash, @a) = @_;
+  return "Seconds are needed for the off-for-timer command" if(@a != 3);
+
+  # my ($err, $hr, $min, $sec, $fn) = GetTimeSpec($a[2]);
+  # return $err if($err);
+  
+  my @lt = localtime;
+  my @tt = localtime(time + $a[2]);
+  my $hms_till = sprintf("%02d:%02d:%02d", $tt[2], $tt[1], $tt[0]);
+  my $hms_now = sprintf("%02d:%02d:%02d", $lt[2], $lt[1], $lt[0]);
+  
+  if($hms_now ge $hms_till) {
+    Log 4, "off-for-timer: won't switch as now ($hms_now) is later than $hms_till";
+    return "";
+  }
+
+  my @b = ($a[0], "off");
+  FHEMduino_PT2262_Set($hash, @b);
+  my $tname = $hash->{NAME} . "_till";
+  CommandDelete(undef, $tname) if($defs{$tname});
+  CommandDefine(undef, "$tname at $hms_till set $a[0] on");
+
+}
+
 sub FHEMduino_PT2262_Define($$){ #######################################################
 
   my ($hash, $def) = @_;
@@ -210,7 +238,7 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
   return "no set value specified" if($na < 2 || $na > 3);
   
   my $list = "";
-  $list .= "off:noArg on:noArg on-till off-till on-for-timer"; # if( AttrVal($hname, "model", "") ne "itremote" );
+  $list .= "off:noArg on:noArg on-till off-till on-for-timer off-for-timer"; # if( AttrVal($hname, "model", "") ne "itremote" );
   $list .= "dimUp:noArg dimDown:noArg on-till off-till" if( AttrVal($hname, "model", "") eq "itdimmer" );
 
   return SetExtensions($hash, $list, $hname, @a) if( $a[1] eq "?" );
@@ -223,6 +251,7 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
   return "Bad time spec" if($na == 3 && $a[2] !~ m/^\d*\.?\d+$/);
 
   return FHEMduino_PT2262_On_For_Timer($hash, @a) if($a[1] eq "on-for-timer");
+  return FHEMduino_PT2262_Off_For_Timer($hash, @a) if($a[1] eq "off-for-timer");
   # return "Bad time spec" if($na == 1 && $a[2] !~ m/^\d*\.?\d+$/);
 
   if(!defined($c)) {
