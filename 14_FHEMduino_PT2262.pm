@@ -53,7 +53,7 @@ sub FHEMduino_PT2262_Initialize($){ ############################################
   $hash->{UndefFn}   = "FHEMduino_PT2262_Undef";
   $hash->{AttrFn}    = "FHEMduino_PT2262_Attr";
   $hash->{ParseFn}   = "FHEMduino_PT2262_Parse";
-  $hash->{AttrList}  = "IODev ITrepetition do_not_notify:0,1 showtime:0,1 ignore:0,1 model:itremote,itswitch,itdimmer EV1527:0,1 ".
+  $hash->{AttrList}  = "IODev ITrepetition do_not_notify:0,1 showtime:0,1 ignore:0,1 model:itremote,itswitch,itdimmer ".
   $readingFnAttributes;
 }
 
