@@ -5,6 +5,9 @@
 # 2015-04-10: added off-till, hjgode
 # 2015-04-29: added off-for-timer, hjgode
 
+# 2016-03-30: First version for EV1527 devices - viegener
+# 2016-04-01: Add actioncodes and correction for basedur
+
 package main;
 
 use strict;
@@ -28,6 +31,10 @@ my %models = (
   itdimmer    => 'dimmer',
   );
 
+  
+my $EV1527_support = 1;   ## set this to zero switching of EV1527 support
+  
+  
 # Supports following devices:
 # - PT2262
 # - DÜWI  
@@ -46,14 +53,14 @@ sub FHEMduino_PT2262_Initialize($){ ############################################
   $hash->{UndefFn}   = "FHEMduino_PT2262_Undef";
   $hash->{AttrFn}    = "FHEMduino_PT2262_Attr";
   $hash->{ParseFn}   = "FHEMduino_PT2262_Parse";
-  $hash->{AttrList}  = "IODev ITrepetition do_not_notify:0,1 showtime:0,1 ignore:0,1 model:itremote,itswitch,itdimmer ".
+  $hash->{AttrList}  = "IODev ITrepetition do_not_notify:0,1 showtime:0,1 ignore:0,1 model:itremote,itswitch,itdimmer EV1527:0,1 ".
   $readingFnAttributes;
 }
 
 sub FHEMduino_PT2262_SetState($$$$){ ###################################################
   my ($hash, $tim, $vt, $val) = @_;
   $val = $1 if($val =~ m/^(.*) \d+$/);
-  return "Undefined value $val" if(!defined($elro_c2b{$val}));
+#  return "Undefined value $val" if(!defined($elro_c2b{$val}));
   return undef;
 }
 
@@ -237,6 +244,12 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
 
   return "no set value specified" if($na < 2 || $na > 3);
   
+  if ( $hash->{CODE} =~ /^1527X/ ) {
+    Log3 $hash, 3, "Set ignored for EV1527 (1527X) devices";
+    return $ret;
+  }
+  return "EV1523 devices support only receive" if ( $hash->{CODE} =~ /^EV/ );
+  
   my $list = "";
   $list .= "off:noArg on:noArg on-till off-till on-for-timer off-for-timer"; # if( AttrVal($hname, "model", "") ne "itremote" );
   $list .= "dimUp:noArg dimDown:noArg on-till off-till" if( AttrVal($hname, "model", "") eq "itdimmer" );
@@ -326,6 +339,8 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
 sub getButton($$){ ###################################################################
 
   my ($hash,$msg) = @_;
+  my $name = $hash->{NAME};
+
   my $receivedHouseCode = "undef";
   my $receivedButtonCode = "undef";
   my $receivedActionCode ="undef";
@@ -435,11 +450,45 @@ sub getButton($$){ #############################################################
   if ($parsedHouseCode ne "undef") {
     if ($parsedButtonCode ne "undef") {
       if ($parsedAction ne "undef") {
-        Log3 $hash, 5, "Get button return/result: ID: " . $receivedHouseCode . $receivedButtonCode . "DEVICE: " . $parsedHouseCode . "_" . $parsedButtonCode . " ACTION: " . $parsedAction;
+        Log3 $hash, 5, "Get button return/result: ID: " . $receivedHouseCode . $receivedButtonCode . "  DEVICE: " . $parsedHouseCode . "_" . $parsedButtonCode . " ACTION: " . $parsedAction;
         return $parsedHouseCode . "_" . $parsedButtonCode . " " . $receivedHouseCode . $receivedButtonCode . " " . $parsedAction;
       }
     }
   }
+  
+  ## looks like no PT2262, might be EV1527
+  # 20bit address / 4bit command
+  # housecode set to fixed 1527X / buttoncode is coded in hex
+
+  if ( $EV1527_support ) {
+    $parsedAction = "undef";
+
+    $parsedHouseCode = "1527X";
+    $parsedButtonCode = sprintf("%5x", oct("0b".substr($bin,0,20)));
+    
+    $receivedHouseCode = $parsedHouseCode;
+    $receivedButtonCode = $parsedButtonCode;
+    $receivedActionCode = substr($bin,20,4);
+
+    Log3 $hash, 5, "FHEMduino_PT2262 EV1527 Message Housecode: $receivedHouseCode Buttoncode: $receivedButtonCode actioncode $receivedActionCode";
+
+    my %ev_action = (
+      "0011" => "on",
+      "0001"	=> "on",
+      "1000"	=> "on",
+      "1001"	=> "on",
+      "0000"	=> "off"
+    );
+
+    if (exists $ev_action{$receivedActionCode}) {
+      $parsedAction = $ev_action{$receivedActionCode};
+
+      Log3 $hash, 5, "Get button return/result: EV1527 ID: " . $receivedHouseCode . $receivedButtonCode . "  DEVICE: " . $parsedHouseCode . "_" . $parsedButtonCode . " ACTION: " . $parsedAction;
+      return $parsedHouseCode . "_" . $parsedButtonCode . " " . $receivedHouseCode . $receivedButtonCode . " " . $parsedAction .
+              " " . $receivedActionCode . " " . "0000";
+    }
+  }
+  
   return "";
 }
 
@@ -452,6 +501,8 @@ sub FHEMduino_PT2262_Parse($$){ ################################################
   my $action = "";
   my $result = "";
   my $basedur = "";
+  my $xmiton = "";
+  my $xmitoff = "";
   
   ($msg, $basedur) = split m/_/, $msg, 2;
 
@@ -460,7 +511,9 @@ sub FHEMduino_PT2262_Parse($$){ ################################################
   $result = getButton($hash,$msg);
 
   if ($result ne "") {
-    ($displayName,$deviceCode,$action) = split m/ /, $result, 3;
+    ($displayName,$deviceCode,$action,$xmiton, $xmitoff) = split m/ /, $result, 5;
+    $xmiton = "" if ( ! defined($xmiton) );
+    $xmitoff = "" if ( ! defined($xmitoff) );
 
     Log3 $hash, 3, "Parse: Device: $displayName Code: $deviceCode Basedur: $basedur Action: $action";
 
@@ -469,7 +522,7 @@ sub FHEMduino_PT2262_Parse($$){ ################################################
 
     if(!$def) {
       Log3 $hash, 5, "UNDEFINED Remotebutton send to define: $displayName";
-      return "UNDEFINED FHEMduino_PT2262_$displayName FHEMduino_PT2262 $deviceCode"."_".$basedur;
+      return "UNDEFINED FHEMduino_PT2262_$displayName FHEMduino_PT2262 $deviceCode"."_".$basedur." ".$xmiton." ".$xmitoff;
     }
 
     $hash = $def;
@@ -497,13 +550,12 @@ sub FHEMduino_PT2262_Attr(@){ ##################################################
 
   # Make possible to use the same code for different logical devices when they
   # are received through different physical devices.
-  return if($a[0] ne "set" || $a[2] ne "IODev");
+  return if($a[0] ne "set" || $a[2] ne "IODev" );
   my $hash = $defs{$a[1]};
   my $iohash = $defs{$a[3]};
   my $cde = $hash->{CODE};
   delete($modules{FHEMduino_PT2262}{defptr}{$cde});
   $modules{FHEMduino_PT2262}{defptr}{$iohash->{NAME} . "." . $cde} = $hash;
-  
   return undef;
 }
 
