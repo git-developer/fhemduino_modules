@@ -7,6 +7,8 @@
 
 # 2016-03-30: First version for EV1527 devices - viegener
 # 2016-04-01: Add actioncodes and correction for basedur
+# 2016-04-21: Reduced logging for PT2262
+# 2016-07-19: Added another action for EV1527 (more actions)
 
 package main;
 
@@ -477,6 +479,7 @@ sub getButton($$){ #############################################################
       "0001"	=> "on",
       "1000"	=> "on",
       "1001"	=> "on",
+      "1100"	=> "on",
       "0000"	=> "off"
     );
 
@@ -506,7 +509,7 @@ sub FHEMduino_PT2262_Parse($$){ ################################################
   
   ($msg, $basedur) = split m/_/, $msg, 2;
 
-  Log3 $hash, 3, "Message: $msg Basedur: $basedur";
+  Log3 $hash, 4, "Message: $msg Basedur: $basedur";
 
   $result = getButton($hash,$msg);
 
@@ -515,7 +518,7 @@ sub FHEMduino_PT2262_Parse($$){ ################################################
     $xmiton = "" if ( ! defined($xmiton) );
     $xmitoff = "" if ( ! defined($xmitoff) );
 
-    Log3 $hash, 3, "Parse: Device: $displayName Code: $deviceCode Basedur: $basedur Action: $action";
+    Log3 $hash, 4, "Parse: Device: $displayName Code: $deviceCode Basedur: $basedur Action: $action";
 
     my $def = $modules{FHEMduino_PT2262}{defptr}{$hash->{NAME} . "." . $deviceCode};
     $def = $modules{FHEMduino_PT2262}{defptr}{$deviceCode} if(!$def);
