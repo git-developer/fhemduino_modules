@@ -247,7 +247,7 @@ sub FHEMduino_PT2262_Set($@){ ##################################################
   return "no set value specified" if($na < 2 || $na > 3);
   
   if ( $hash->{CODE} =~ /^1527X/ ) {
-    Log3 $hash, 3, "Set ignored for EV1527 (1527X) devices";
+    Log3 $hash, 4, "Set ignored for EV1527 (1527X) devices";
     return $ret;
   }
   return "EV1523 devices support only receive" if ( $hash->{CODE} =~ /^EV/ );
