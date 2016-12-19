@@ -2,6 +2,7 @@
 # FHEMduino SomfyR Modul (window shades - currently only receive)
 # Special case SOMFYR will only support mapping of somfy remotes to the real devices in FHEM 
 # receives the signal from a SOMFY remote and maps this to the device in FHEM 
+# 2016-12-09 - added rolling code as reading
 
 use strict;
 use warnings;
@@ -98,6 +99,7 @@ sub FHEMduino_SomfyR_Parse($$){
 	}
 
   # Only command and address are needed	
+	my $rolling = substr($msg, 9, 4);
 
 	# Identify the SomfyRemote module
 	my $srh;
@@ -196,6 +198,7 @@ sub FHEMduino_SomfyR_Parse($$){
   readingsBeginUpdate($hash);
   readingsBulkUpdate($hash, "state", $cmd);
   readingsBulkUpdate($hash, "command", $cmd);
+  readingsBulkUpdate($hash, "rollingcode", $rolling);
   readingsEndUpdate($hash, 1); # Notify is done by Dispatch
 
   return $hash->{NAME};
