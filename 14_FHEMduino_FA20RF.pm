@@ -34,7 +34,7 @@ FHEMduino_FA20RF_Initialize($)
   # output format is "F4d4efd-12128"
   #                   FAAAAAA-mmmmm"
   #                   0123456789ABC
-  $hash->{Match}     = "^F............";
+  $hash->{Match}     = "^F......?-.....";
   $hash->{SetFn}     = "FHEMduino_FA20RF_Set";
   $hash->{StateFn}   = "FHEMduino_FA20RF_SetState";
   $hash->{DefFn}     = "FHEMduino_FA20RF_Define";
@@ -263,13 +263,11 @@ FHEMduino_FA20RF_Parse($$)
   my ($hash,$msg) = @_;
   my @a = split("", $msg);
 
-  my $deviceCode = "";
-
   # output format is "F4d4efd-12128"
   #                   FAAAAAA-mmmmm"
   #                   0123456789ABC
 
-  $deviceCode = $a[1].$a[2].$a[3].$a[4].$a[5].$a[6];
+  my ($deviceCode, $Freq) = $msg =~ /F(.{5,6})-(.{5})/;
   
   my $def = $modules{FHEMduino_FA20RF}{defptr}{$hash->{NAME} . "." . $deviceCode};
   $def = $modules{FHEMduino_FA20RF}{defptr}{$deviceCode} if(!$def);
@@ -283,10 +281,6 @@ FHEMduino_FA20RF_Parse($$)
   return "" if(IsIgnored($name));
   
   Log3 $name, 5, "FHEMduino_FA20RF: actioncode: $deviceCode";  
-  
-  my $Freq;
-
-  $Freq = $a[8].$a[9].$a[10].$a[11].$a[12];
   
   $hash->{lastReceive} = time();
   $hash->{lastValues}{FREQ} = $Freq;
