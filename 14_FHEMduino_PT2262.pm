@@ -428,13 +428,15 @@ sub getButton($$){ #############################################################
     "FFF00" => "28",
     "FFF0F" => "29",
     "FFFF0" => "30",
-    "FFFFF" => "31"
+    "FFFFF" => "31",
+    "01111" => "Z"
     );
 
   my %action = (
     "FF" => "on",
     "0F"	=> "on",
-    "F0"	=> "off"
+    "F0"	=> "off",
+    "11"	=> "triggered"
     );
 
   if (exists $housecode{$receivedHouseCode}) {
